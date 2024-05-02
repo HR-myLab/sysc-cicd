@@ -1,0 +1,35 @@
+name: CI/CD
+on:
+  pull_request:
+    branches [ master ]
+  push:
+    branches [ master ]
+jobs:
+  build-and-deploy;
+    runs-on: ubuntu-latest
+    steps:
+    -name: checkout repo
+     uses: actions/checkout@v2
+    -name: copy via ssh
+     uses: appleboy/scp-action@master
+     with:
+      host: ${{ secret.HOST}}
+      username: ${{ secret.USERNAME}}
+      PASSWORD: ${{ secret.PASSWORD}}
+      port: 22
+      source: .,!node_modules
+      target: ~/app
+    -name: deploy
+     uses: appleboy/ssh-action@master
+     with:
+      host: ${{ secret.HOST}}
+      username: ${{ secret.USERNAME}}
+      password: ${{ secret.PASSWORD}}
+      port: 2
+      script: |
+          export NVM_DIR=~/.nvm
+          source ~/.nvm/nvm.sh
+          cd ~/app
+          npm install --omit=dev
+          pm2 stop al
+          pm2 start index.js
